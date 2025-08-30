@@ -1,0 +1,113 @@
+import { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { VoiceSelector } from '@/components/VoiceSelector';
+import { EmotionAnalyzer } from '@/components/EmotionAnalyzer';
+import { TextInput } from '@/components/TextInput';
+import { AudioPlayer } from '@/components/AudioPlayer';
+import { useSpeechSynthesis } from '@/hooks/useSpeechSynthesis';
+import { Mic, Sparkles } from 'lucide-react';
+
+const Index = () => {
+  const [text, setText] = useState('');
+  const [selectedVoice, setSelectedVoice] = useState('lisa');
+  const { 
+    isGenerating, 
+    audioUrl, 
+    emotions, 
+    isAnalyzing, 
+    analyzeEmotion, 
+    generateSpeech,
+    setAudioUrl 
+  } = useSpeechSynthesis();
+
+  useEffect(() => {
+    if (text.length > 10) {
+      analyzeEmotion(text);
+    }
+  }, [text, analyzeEmotion]);
+
+  const handleGenerateSpeech = async () => {
+    await generateSpeech(text, selectedVoice, emotions);
+  };
+
+  const handleRegenerate = () => {
+    setAudioUrl(null);
+    handleGenerateSpeech();
+  };
+
+  return (
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto px-4 py-8 max-w-6xl">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <div className="flex items-center justify-center space-x-3 mb-4">
+            <div className="p-3 rounded-full bg-gradient-primary glow">
+              <Mic className="w-8 h-8 text-background" />
+            </div>
+            <h1 className="text-4xl font-bold gradient-text">AI Speech Studio</h1>
+            <Sparkles className="w-8 h-8 text-accent animate-pulse" />
+          </div>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            Transform your text into emotionally intelligent speech with AI-powered tone adaptation
+          </p>
+        </div>
+
+        {/* Main Content */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Left Column */}
+          <div className="space-y-6">
+            <TextInput
+              text={text}
+              onTextChange={setText}
+              onFileUpload={setText}
+              isLoading={isGenerating}
+            />
+            
+            <VoiceSelector
+              selectedVoice={selectedVoice}
+              onVoiceChange={setSelectedVoice}
+            />
+
+            <div className="text-center">
+              <Button
+                onClick={handleGenerateSpeech}
+                disabled={!text.trim() || isGenerating}
+                size="lg"
+                className="w-full bg-gradient-primary hover:scale-105 transition-all duration-300 glow"
+              >
+                {isGenerating ? (
+                  <div className="flex items-center space-x-2">
+                    <div className="w-4 h-4 border-2 border-background border-t-transparent rounded-full animate-spin"></div>
+                    <span>Generating Speech...</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center space-x-2">
+                    <Mic className="w-5 h-5" />
+                    <span>Generate Speech</span>
+                  </div>
+                )}
+              </Button>
+            </div>
+          </div>
+
+          {/* Right Column */}
+          <div className="space-y-6">
+            <EmotionAnalyzer
+              text={text}
+              emotions={emotions}
+              isAnalyzing={isAnalyzing}
+            />
+            
+            <AudioPlayer
+              audioUrl={audioUrl}
+              isGenerating={isGenerating}
+              onRegenerate={handleRegenerate}
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Index
